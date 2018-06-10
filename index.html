@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en" >
+
+<head>
+    <meta charset="UTF-8">
+    <title>TodoList 第一周</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous">
+    <style>
+        .completed {
+            text-decoration: line-through
+        }
+    </style>
+</head>
+
+<body translate="no" >
+
+<div id="app" class="container my-3">
+    <div class="input-group mb-3">
+        <div class="input-group-prepend">
+            <span class="input-group-text" id="basic-addon1">待辦事項</span>
+        </div>
+        <input type="text" name="listTxt" id="listTxt" class="form-control" placeholder="準備要做的任務">
+        <input type="date" name="listDate" id="listDate" class="form-control" placeholder="請選擇日期">
+        <div class="input-group-append">
+            <button class="btn btn-primary" id="send" type="button">新增</button>
+        </div>
+    </div>
+    <div class="card text-center">
+        <div class="card-header">
+            <ul class="nav nav-tabs card-header-tabs" id="myTab" role="tablist">
+                <li class="nav-item">
+                    <a class="nav-link active" id="home-tab" data-toggle="tab" href="#home" role="tab" aria-controls="home" aria-selected="true">全部</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="profile-tab" data-toggle="tab" href="#profile" role="tab" aria-controls="profile" aria-selected="false">進行中</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="messages-tab" data-toggle="tab" href="#messages" role="tab" aria-controls="messages" aria-selected="false">已完成</a>
+                </li>
+            </ul>
+        </div>
+        <div class="tab-content">
+            <div class="tab-pane active" id="home" role="tabpanel" aria-labelledby="home-tab">
+                <ul id="listAll" class="list-group list-group-flush text-left">
+                </ul>
+            </div>
+            <div class="tab-pane" id="profile" role="tabpanel" aria-labelledby="profile-tab">
+                <ul id="listIng" class="list-group list-group-flush text-left">
+                </ul>
+            </div>
+            <div class="tab-pane" id="messages" role="tabpanel" aria-labelledby="messages-tab">
+                <ul id="listOver" class="list-group list-group-flush text-left">
+                </ul>
+            </div>
+        </div>
+        <div class="card-footer d-flex justify-content-between">
+            <span>還有 <span id="listCount"></span> 筆任務未完成</span>
+            <a href="#" id="clear-list">清除所有任務</a>
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js" integrity="sha384-smHYKdLADwkXOn1EmN1qk/HfnUcbVRZyYmZ4qpPea6sjB/pTJ0euyQp0Mk8ck+5T" crossorigin="anonymous"></script>
+<script>
+    $('#myTab a').on('click', function (e) {
+        e.preventDefault();
+        $(this).tab('show');
+    });
+</script>
+
+<script src="app.js"></script>
+<script>
+    var listTxt   = document.getElementById('listTxt');
+    var listDate  = document.getElementById('listDate');
+    var listAll   = document.getElementById('listAll');
+    var listIng   = document.getElementById('listIng');
+    var listOver  = document.getElementById('listOver');
+    var listCount = document.getElementById('listCount');
+
+    //新增待辦事項
+    var send = document.getElementById('send');    
+    send.addEventListener('click',function(e){
+        e.preventDefault();
+        var days = new Date();
+        var id   = days.getTime();
+        var txt  = listTxt.value;
+        var date = listDate.value;
+        todoList.addItemToList(id, txt, 0, date, 0);
+        displayList();
+    }); 
+
+    //清除任務或完成任務
+    listAll.addEventListener('click', function(e) {
+        clickFun(e);
+    });
+    listIng.addEventListener('click', function(e) {
+        clickFun(e);
+    });
+    listOver.addEventListener('click', function(e) {
+        clickFun(e);
+    });
+    function clickFun(e) {
+        var classList = e.target.classList;
+        for (var i in classList) {
+            if (classList[i] === 'listClose') {
+                if(confirm("確定要刪除資料嗎?")){
+                    id = e.target.dataset.target;
+                    todoList.removeItemFromList(id);
+                    displayList();
+                }
+            }else if(classList[i] === 'listcheckbox'){
+                id = e.target.dataset.target;
+                todoList.updateItemFromList(id);
+                displayList();
+            }
+        }
+    }
+
+    //清除所有任務
+    var clearList = document.getElementById('clear-list');
+    clearList.addEventListener('click',function(e){
+        e.preventDefault();
+        todoList.clearList();
+        displayList();
+    }); 
+
+    //資料輸出
+    function displayList(){
+        var listArray = todoList.listItem();
+
+        var outputAll  = "";
+        var outputIng  = "";
+        var outputOver = "";
+
+        var id     = "";
+        var txt    = "";
+        var star   = "";
+        var date   = "";
+        var status = "";
+        var count  = 0;
+
+        for (var i in listArray) {
+            id     = listArray[i].id;
+            txt    = listArray[i].txt;
+            star   = listArray[i].star;
+            date   = listArray[i].date;
+            status = listArray[i].status;
+
+            $template =`<li class="list-group-item">
+                            <div class="d-flex">
+                                <div class="form-check">
+                                <label class="form-check-label" for="a${id}">
+                                    ${txt} ${date}
+                                </label>
+                                </div>
+                                <button type="button" data-target="${id}" class="listClose close ml-auto" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                        </li>`;
+            
+            //status
+            Overclass = "";
+            Overcheck = "";
+            if(status==0){//0:進行中
+                outputIng += $template;
+                count++;
+            }else if(status==1){//1:已完成
+                outputOver += $template;
+                Overclass = "completed";
+                Overcheck = "checked";
+            }
+            
+            //全部資料
+            outputAll += `<li class="list-group-item">
+                            <div class="d-flex">
+                                <div class="form-check">
+                                <input type="checkbox" class="form-check-input listcheckbox" data-target="${id}" id="a${id}" ${Overcheck}>
+                                <label class="form-check-label ${Overclass}" for="a${id}">
+                                    ${txt} ${date}
+                                </label>
+                                </div>
+                                <button type="button" data-target="${id}" class="listClose close ml-auto" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                        </li>`;
+        }
+        listIng.innerHTML    = outputIng;
+        listOver.innerHTML   = outputOver;
+        listAll.innerHTML    = outputAll;
+        listCount.innerHTML  = count;
+    }
+
+    displayList();
+</script>
+
+
+</body>
+
+</html>
